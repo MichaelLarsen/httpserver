@@ -33,6 +33,7 @@ public class FirstHttpServer1 {
         InetSocketAddress i = new InetSocketAddress(ip, port); //localhost - 127.0.0.1
         HttpServer server = HttpServer.create(i, 0);
         server.createContext("/welcome", new WelcomeHandler());
+        server.createContext("/headers", new HeadersHandler());
         server.setExecutor(null);
         server.start();
         System.out.println("Started the server, listening on:");
@@ -56,6 +57,44 @@ public class FirstHttpServer1 {
             sb.append("<h2>Welcome to my very first home made Web Server :-)</h2>\n");
             sb.append("</body>\n");
             sb.append("</html>\n");
+            String response = sb.toString();
+            Headers h = he.getResponseHeaders();
+            h.add("Content-Type", "text/html");
+            he.sendResponseHeaders(200, response.length());
+            try (PrintWriter pw = new PrintWriter(he.getResponseBody())) {
+                pw.print(response);
+            };
+        }
+    }
+
+    static class HeadersHandler implements HttpHandler {
+
+        @Override
+        public void handle(HttpExchange he) throws IOException {
+//            String response = "Welcome to my first http-server";
+            StringBuilder sb = new StringBuilder();
+            sb.append("<!DOCTYPE html>\n");
+            sb.append("<html>\n");
+            sb.append("<head>\n");
+            sb.append("<title>My Headers</title>\n");
+            sb.append("<meta charset='UTF-8'>\n");
+            sb.append("</head>\n");
+            sb.append("<body>\n");
+            sb.append("<table border = \"1\">");
+            sb.append("<tr>");
+            sb.append("<th>Header</th>");
+            sb.append("<th>Value</th>");
+            sb.append("</tr>");
+            for (String key : he.getRequestHeaders().keySet()) {
+                //he.getRequestHeaders().get(key);
+                sb.append("<tr>");
+                sb.append("<td>" + key);
+                sb.append("<td>" + he.getRequestHeaders().get(key));
+                sb.append("</tr>");
+            }
+            sb.append("</body>\n");
+            sb.append("</html>\n");
+
             String response = sb.toString();
             Headers h = he.getResponseHeaders();
             h.add("Content-Type", "text/html");
