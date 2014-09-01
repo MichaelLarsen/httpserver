@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.InetSocketAddress;
+import java.util.Scanner;
 
 /**
  *
@@ -29,7 +30,6 @@ public class FirstHttpServer1 {
     static int port = 8080;
     static String ip = "127.0.0.1";
     static String contentFolder = "public/";
-    
 
     public static void main(String[] args) throws IOException {
         if (args.length >= 3) {
@@ -42,6 +42,7 @@ public class FirstHttpServer1 {
         server.createContext("/welcome", new WelcomeHandler());
         server.createContext("/headers", new HeadersHandler());
         server.createContext("/pages/", new PagesHandler(contentFolder));
+        server.createContext("/parameters", new ParametersHandler());
         server.setExecutor(null);
         server.start();
         System.out.println("Started the server, listening on:");
@@ -114,6 +115,7 @@ public class FirstHttpServer1 {
     }
 
     static class PagesHandler implements HttpHandler {
+
         String contentFolder;
 
         private PagesHandler(String contentFolder) {
@@ -134,6 +136,38 @@ public class FirstHttpServer1 {
             try (OutputStream os = he.getResponseBody()) {
                 os.write(bytesToSend, 0, bytesToSend.length);
             }
+        }
+    }
+
+    static class ParametersHandler implements HttpHandler {
+
+        @Override
+        public void handle(HttpExchange he) throws IOException {
+            StringBuilder sb = new StringBuilder();
+            sb.append("<!DOCTYPE html>\n");
+            sb.append("<html>\n");
+            sb.append("<head>\n");
+            sb.append("<title>Parameters</title>\n");
+            sb.append("<meta charset='UTF-8'>\n");
+            sb.append("</head>\n");
+            sb.append("<body>\n");
+            sb.append("<h2>Parameters:</h2>\n");
+            sb.append("<p>Method is: " + he.getRequestMethod());
+            sb.append("<p>Get-Parameters: " + he.getRequestURI().getQuery());
+            Scanner scan = new Scanner(he.getRequestBody());
+            while (scan.hasNext()) {
+                sb.append("Request body, with Post-parameters: " + scan.nextLine());
+                sb.append("</br>");
+            }
+            sb.append("</body>\n");
+            sb.append("</html>\n");
+            String response = sb.toString();
+            Headers h = he.getResponseHeaders();
+            h.add("Content-Type", "text/html");
+            he.sendResponseHeaders(200, response.length());
+            try (PrintWriter pw = new PrintWriter(he.getResponseBody())) {
+                pw.print(response);
+            };
         }
     }
 }
