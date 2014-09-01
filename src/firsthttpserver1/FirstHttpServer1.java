@@ -124,7 +124,10 @@ public class FirstHttpServer1 {
 
         @Override
         public void handle(HttpExchange he) throws IOException {
-            File file = new File(contentFolder + "index.html");
+            System.out.println(he.getRequestURI().toString());
+            String str = he.getRequestURI().toString();
+            String substring = str.substring(7);
+            File file = new File(contentFolder + substring);
             byte[] bytesToSend = new byte[(int) file.length()];
             try {
                 BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));
@@ -132,6 +135,11 @@ public class FirstHttpServer1 {
             } catch (IOException ie) {
                 ie.printStackTrace();
             }
+            Headers h = he.getResponseHeaders();
+            int index = substring.indexOf(".");
+            String extension = substring.substring(index + 1);
+            System.out.println("Extension string: " + extension);
+            h.add("Content-Type", "" + extension);
             he.sendResponseHeaders(200, bytesToSend.length);
             try (OutputStream os = he.getResponseBody()) {
                 os.write(bytesToSend, 0, bytesToSend.length);
